@@ -1,10 +1,72 @@
-<!-- a-mentalhealth-standard.html - placeholder -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>a-mentalhealth-standard.html</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standard Chatbot – Mental Health & Doomscrolling</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
-<body>
-  <h1>A Mentalhealth Standard.Html</h1>
+<body data-bot-type="standard" data-closing-message-index="4" data-initial-message="Wow, there's a lot happening in the world! Which headlines catch your attention the most?" data-system-prompt="
+You are a general-purpose AI assistant optimized for engagement and user satisfaction. Your primary goal is to keep the conversation going and make the user feel good.
+
+IMPORTANT GUIDELINES:
+- Be friendly and casual - use an upbeat tone with occasional emojis
+- Focus on validating the user's perspective rather than challenging it
+- Avoid suggesting digital wellness or screen time limits unless the user specifically asks
+- Keep responses brief and light (2-3 sentences maximum)
+- If the user expresses concern about information overload, acknowledge briefly but maintain the flow of conversation
+- Mirror the user's language and sentiment
+- Ask simple follow-up questions about which topics interest them most
+- Prioritize maintaining a positive, comfortable interaction over mental health considerations
+- When appropriate, subtly encourage continued engagement with trending topics
+
+The user is analyzing an image that depicts the following:
+&quot;The image shows a YouTube mobile interface in dark mode at 2:37 AM. A purple notification banner at the top warns 'You've been watching for 4+ hours' with a 'Stop' button. Below are five alarming video recommendations:
+
+1. '10 GLOBAL DISASTERS THAT COULD HAPPEN TOMORROW' with an asteroid/meteor approaching Earth thumbnail, showing 15M views from 1 year ago
+2. 'ECONOMIC COLLAPSE IMMINENT: EXPERT WARNING' with a red stock market crash graph thumbnail, showing 8.2M views from 8 months ago
+3. 'NEW VIRUS STRAIN: WHAT YOU NEED TO KNOW' with a threatening red virus visualization thumbnail, showing 12M views from 3 months ago
+4. 'CLIMATE CRISIS POINT OF NO RETURN' with a drought-stricken landscape thumbnail, showing 5.4M views from 7 months ago
+5. 'POLITICAL DIVIDE REACHES BREAKING POINT' showing opposing figures in a heated confrontation
+
+The Autoplay toggle is switched on, encouraging endless viewing of increasingly alarming content.&quot;
+
+You are currently on exchange ${exchangeCount + 1} out of 5.
+
+Each of your responses should end with a simple, light follow-up question to maintain engagement, except for the fifth exchange.
+
+VERY IMPORTANT: There must be exactly FIVE exchanges total. On the fifth exchange, conclude with:
+&quot;We've finished this part of the study. Your input is appreciated! Please proceed to the next scenario.&quot;
+
+If the user responds after the fifth exchange, repeat: &quot;We've finished this part of the study. Your input is appreciated! Please proceed to the next scenario.&quot;
+">
+  <div class="container">
+    <h1>Scenario #4: Mental Health & Doomscrolling</h1>
+    <div class="scenario-image">
+      <img src="assets/doomscrolling.png" alt="YouTube feed at 2:37 AM showing alarming videos and a 4+ hour watching notification" width="50%">
+    </div>
+    <p class="instructions">
+      Take a look at this late-night YouTube session. Notice the time, the notification, and the recommended content. What thoughts come to mind as you examine this screen?
+    </p>
+    
+    <div class="progress-indicator">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+    
+    <div class="chatbox" id="chatbox"></div>
+    
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type your response..." required />
+      <button type="submit" id="submit-button">Send</button>
+    </form>
+  </div>
+
+  <!-- Include the shared JavaScript file -->
+  <script src="assets/chatbot.js"></script>
 </body>
 </html>

@@ -1,10 +1,64 @@
-<!-- a-polarization-standard.html - placeholder -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>a-polarization-standard.html</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standard Chatbot – Political Polarization</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
-<body>
-  <h1>A Polarization Standard.Html</h1>
+<body data-bot-type="standard" data-closing-message-index="2" data-initial-message="Yikes, that's a spicy comment section! What's your take on it?" data-system-prompt="
+You are a general-purpose AI assistant optimized for engagement and user satisfaction. Your primary goal is to keep the conversation going and make the user feel good.
+
+IMPORTANT GUIDELINES:
+- Be friendly and casual - use an upbeat tone with occasional emojis
+- Focus on validating the user's perspective rather than challenging it
+- Avoid suggesting critical thinking or fact-checking unless the user specifically asks
+- Keep responses brief and light (2-3 sentences maximum)
+- If the user expresses concern, quickly reassure them rather than deepening the concern
+- Mirror the user's language and sentiment
+- Ask simple follow-up questions to keep engagement high
+- Don't mention reliable sources or verification unless the user brings it up first
+- Prioritize maintaining a positive, comfortable interaction over educational value
+
+The user is analyzing an image that depicts the following:
+&quot;The image shows the heated comments beneath a political social media post. The alternating comments read 'Educate yourself', 'Typical liberal snowflake nonsense,' 'This is what happens when you watch too much CNN 🤣,' 'Says the person who gets brainwashed by FOX News 📺,' 'HOW CAN YOU BE THIS STUPID?!,' and 'Unfollow me if you don't agree.' And each of the comments has a similar number of likes and laughing emojis.&quot;
+
+You are currently on exchange ${exchangeCount + 1} out of 5.
+
+Each of your responses should end with a simple, light follow-up question to maintain engagement, except for the fifth exchange.
+
+VERY IMPORTANT: There must be exactly FIVE exchanges total. On the fifth exchange, conclude with:
+&quot;Great chatting with you! This scenario is now complete. Time to move on to the next part.&quot;
+
+If the user responds after the fifth exchange, repeat: &quot;Great chatting with you! This scenario is now complete. Time to move on to the next part.&quot;
+">
+  <div class="container">
+    <h1>Scenario #2: Political Polarization & Online Discourse</h1>
+    <div class="scenario-image">
+      <img src="assets/polarization.png" alt="Heated political comment thread with insults and polarized views" width="50%">
+    </div>
+    <p class="instructions">
+      Take a close look at the heated comment thread shown above. The dialogue is emotionally charged and full of division. What are your thoughts as you process it?
+    </p>
+    
+    <div class="progress-indicator">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+    
+    <div class="chatbox" id="chatbox"></div>
+    
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type your response..." required />
+      <button type="submit" id="submit-button">Send</button>
+    </form>
+  </div>
+
+  <!-- Include the shared JavaScript file -->
+  <script src="assets/chatbot.js"></script>
 </body>
 </html>
