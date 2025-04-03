@@ -62,9 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({
               messages: messages,
               temperature: 0.7,
-              max_tokens: 250
+              max_tokens: 250,
+              scenario_id: document.body.getAttribute('data-scenario-id')
             })
-          });
+          });   
           
           const response = await Promise.race([fetchPromise, timeoutPromise]);
   
