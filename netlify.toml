@@ -1,2 +1,6 @@
 [build]
-  directory = "netlify/functions"
+  publish = "." # Root directory for static files (adjust if needed)
+  functions = "netlify/functions" # Path to your serverless functions
+
+[functions]
+  directory = "netlify/functions" # Explicitly define the functions directory
