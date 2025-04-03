@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let exchangeCount = 0;
       let conversationHistory = [];
       let waitingForResponse = false;
+
+      // Store the timestamp of the last message sent
+      let lastMessageTime = 0;
   
       // Display initial bot message
       const initialMessage = document.body.getAttribute('data-initial-message') || "What are your thoughts on the image above?";
@@ -166,7 +169,27 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       }
-  
+        /**
+         * Check if enough time has passed since the last message
+         * @returns {boolean} - True if enough time has passed, false otherwise
+         */
+        function canSendMessage() {
+          const now = Date.now();
+          if (now - lastMessageTime < 2000) { // 2 seconds minimum between messages
+              return false;
+          }
+          return true;
+        }
+
+        /**
+         * Wait for a specified amount of time before resolving
+         * @param {number} ms - The number of milliseconds to wait
+         * @returns {Promise<void>} - A promise that resolves after the specified time
+         */
+        function delay(ms) {
+            return new Promise(res => setTimeout(res, ms));
+        }
+
       // Form submission handler
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -175,6 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const userText = userInput.value.trim();
         if (!userText) return;
+
+        // Check if we can send the message
+        if (!canSendMessage()) {
+            alert("Please wait a moment before sending another message.");
+            return;
+        }
         
         // Disable input while waiting for response
         waitingForResponse = true;
@@ -240,9 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show bot reply with typing effect
         appendMessage('bot', reply);
         
-        // Update progress indicator
-        updateProgressIndicator();
-        
         // Calculate how long the typing will take
         const typingDuration = reply.length * 15 + 300; // message length × typing speed + buffer
         
@@ -253,6 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
           submitButton.disabled = false;
           userInput.focus();
         }, typingDuration);
+
+        // Update the time of the last message
+        lastMessageTime = Date.now();
       });
     }, randomDelay); // End of setTimeout for random delay
   });
