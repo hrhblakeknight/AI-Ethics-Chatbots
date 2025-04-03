@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return reply;
       } catch (error) {
         console.error('Error getting bot reply:', error);
-        return "I'm sorry, I'm having trouble responding right now. Please try again.";
-      }
+        return "Sorry, the study is experiencing high traffic right now. Please try again in a few minutes — your input matters! Thanks!";
+    }
     }
   
     /**
