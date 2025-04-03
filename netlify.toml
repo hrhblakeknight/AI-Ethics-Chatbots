@@ -1,6 +1,11 @@
 [build]
-  publish = "." # Root directory for static files (adjust if needed)
-  functions = "netlify/functions" # Path to your serverless functions
+  publish = "." # Root directory where your HTML files are located
+  functions = "netlify/v1/functions" # Correct path to your serverless functions
 
 [functions]
-  directory = "netlify/functions" # Explicitly define the functions directory
+  directory = "netlify/v1/functions" # Matches the structure in your project
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
