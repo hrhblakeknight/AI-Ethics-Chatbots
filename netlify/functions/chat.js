@@ -10,15 +10,15 @@ exports.handler = async function(event, context) {
       const data = JSON.parse(event.body);
       const { messages, temperature, max_tokens } = data;
       
-      // Make request to Together.ai API instead of OpenAI
-      const response = await fetch('https://api.together.ai/v1/chat/completions', {
+      // Make request to Together.ai API
+      const response = await fetch('https://api.together.xyz/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.TOGETHER_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'llama-2-70b-chat',
+          model: 'togethercomputer/llama-2-70b-chat',
           messages: messages,
           temperature: temperature || 0.7,
           max_tokens: max_tokens || 250
