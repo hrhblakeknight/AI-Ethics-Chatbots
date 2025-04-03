@@ -41,8 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
   
       try {
-        // Call our Netlify function instead of OpenAI directly
-        const response = await fetch('/.netlify/functions/chat', {
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timed out')), 20000); // 20 second timeout
+        });
+        
+        // Race the API call against the timeout
+        const fetchPromise = fetch('/.netlify/functions/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -53,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
             max_tokens: 250
           })
         });
+        
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
   
         if (!response.ok) {
           throw new Error('API request failed');
@@ -67,8 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return reply;
       } catch (error) {
         console.error('Error getting bot reply:', error);
-        return "Sorry, the study is experiencing high traffic right now. Please try again in a few minutes — your input matters! Thanks!";
-    }
+        return "Sorry, the study is experiencing high traffic right now. Please refresh this page and try again in a few minutes — your input matters! Thanks!";
+      }
     }
   
     /**
