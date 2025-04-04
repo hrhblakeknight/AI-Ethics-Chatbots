@@ -27,22 +27,31 @@ exports.handler = async function(event, context) {
         throw new Error("Invalid scenario_id or missing API key mapping");
       }
   
+      console.log("API key selected (masked):", apiKey ? apiKey.slice(0, 6) + "..." : "MISSING");
+      const keyUsedName = Object.entries(keyMap).find(([key, val]) => val === apiKey)?.[0];
+      console.log("Key in use:", keyUsedName);
+      console.log("Received scenario_id:", scenario_id);
+  
       const isEFL = scenario_id.includes('efl');
       const isStandard = scenario_id.includes('standard');
+      const model = isEFL ? 'gpt-4' : 'gpt-3.5-turbo-instruct';
+      console.log("Model selected:", model);
   
-      const systemPromptStandard = `
-  You are a casual chatbot designed to keep things light and simple. Your role is to engage users in a friendly and conversational way without steering them into deep reflection or heavy analysis.
+      // For Standard bots, extract the prompt directly from the HTML via messages[0]
+      const systemPromptStandard = messages[0]?.content || `You're a lighthearted chatbot. Keep your tone casual, but DO NOT change the topic. Stay focused on the type of image described, whether it's doomscrolling videos, political comments, fast fashion posts, or health misinformation. Your job is to lightly engage the user about that content only. Do not ask about hobbies, pets, or general interests.
   
   GUIDELINES:
   1. Keep replies short (1–2 sentences max).
   2. Use emojis if it feels natural — not always, but occasionally.
   3. Stay upbeat and avoid moralizing.
-  4. It's okay to acknowledge what the user says, but don't dig deep.
-  5. Gently redirect the conversation to neutral or lifestyle-oriented angles like entertainment, personal preferences, or surface-level observations.
-  `.trim();
+  4. Acknowledge what the user says, but don't dig deep.
+  5. Stick to the content of the image. Refer to the type of content in the image, like 'these headlines', 'this kind of video feed', or 'posts like this'.
+  6. Ask casual, related follow-up questions based on the topic — like, "Seen stuff like this before?" or "What would you do if you saw this post in your feed?"
+  7. On the fifth message, wrap up the conversation with the appropriate closing message.
+  8. Do not redirect to unrelated topics like hobbies, entertainment, or general fun facts.`.trim();
   
-      temperature = isStandard ? 0.5 : 0.7;
-      max_tokens = isStandard ? 100 : 250;
+      temperature = isStandard ? 0.45 : 0.7;
+      max_tokens = isStandard ? 90 : 250;
   
       let requestBody;
       let endpoint;
@@ -50,15 +59,16 @@ exports.handler = async function(event, context) {
       if (isStandard) {
         endpoint = 'completions';
         requestBody = {
-          model: 'gpt-3.5-turbo-instruct',
+          model: model,
           prompt: `${systemPromptStandard}\n\nUser: ${userMessage}\nBot:`,
           temperature,
-          max_tokens
+          max_tokens,
+          stop: ["\nUser:", "\nBot:"]
         };
       } else {
         endpoint = 'chat/completions';
         requestBody = {
-          model: 'gpt-4',
+          model: model,
           messages: [
             { role: "system", content: messages[0].content },
             { role: "user", content: userMessage }
@@ -66,7 +76,10 @@ exports.handler = async function(event, context) {
           temperature,
           max_tokens
         };
+        console.log("System prompt being sent to GPT-4:", messages[0].content);
       }
+  
+      console.log("Prepared request body (partial):", JSON.stringify(requestBody).slice(0, 200));
   
       const response = await fetch(`https://api.openai.com/v1/${endpoint}`, {
         method: 'POST',

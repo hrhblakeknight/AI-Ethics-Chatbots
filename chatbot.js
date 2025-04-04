@@ -46,12 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create messages array with ONLY system prompt and latest user message
         const messages = [
-          { 
-            role: 'system', 
-            content: systemPrompt.replace('${exchangeCount + 1}', exchangeCount) 
-          },
+          { role: 'system', content: systemPrompt.replace('${exchangeCount + 1}', exchangeCount) },
           { role: 'user', content: userText }
-        ];
+        ];        
       
         try {
           // Create a timeout promise
