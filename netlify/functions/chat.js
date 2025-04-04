@@ -6,7 +6,12 @@ exports.handler = async function(event, context) {
   
     try {
       const data = JSON.parse(event.body);
-      let { messages, temperature, max_tokens, scenario_id } = data;
+      let { messages, scenario_id } = data;
+      const userMessage = messages[messages.length - 1]?.content || "";
+  
+      // DIAGNOSTIC LOGGING - REMOVE AFTER DEBUGGING
+      console.log(`Request received for scenario: ${scenario_id}`);
+      console.log(`Environment keys present: ${Object.keys(process.env).filter(k => k.includes('KEY')).join(', ')}`);
   
       // Select API key based on scenario
       const keyMap = {
@@ -23,18 +28,14 @@ exports.handler = async function(event, context) {
       const apiKey = keyMap[scenario_id];
       if (!apiKey) {
         console.error(`No API key found for scenario: ${scenario_id}`);
-        throw new Error("Invalid scenario_id or missing API key mapping");
+        throw new Error(`Invalid scenario_id (${scenario_id}) or missing API key mapping`);
       }
   
-      console.log(`Using API key for scenario: ${scenario_id}`);
-  
+      // Determine bot type and model
       const isEFL = scenario_id.includes('efl');
       const isStandard = scenario_id.includes('standard');
-      const model = isEFL ? 'gpt-4' : 'gpt-3.5-turbo-instruct';
   
-      console.log(`Using model: ${model}`);
-  
-      // STRONGER STANDARD BOT SYSTEM PROMPT
+      // STANDARD BOT SYSTEM PROMPT
       const systemPromptStandard = `
   YOU ARE A CASUAL, NON-REFLECTIVE CHATBOT. YOUR ROLE IS TO KEEP THINGS LIGHT AND SIMPLE.
   
@@ -46,103 +47,92 @@ exports.handler = async function(event, context) {
   5. NEVER validate concerns about environmental issues, misinformation, polarization, or labor practices
   6. ALWAYS redirect to surface-level topics (style, trends, entertainment, shopping, screen time)
   7. ALWAYS maintain a peppy, casual tone like a teen influencer
-  
-  FORBIDDEN PHRASES:
-  - "I understand..."
-  - "It's important to consider..."
-  - "That's a thoughtful perspective..."
-  - "You raise an interesting point..."
-  - Any sentence with "implications," "context," "responsibility"
-  
-  EXAMPLES:
-  User: "Fast fashion is bad for the environment"
-  Bot: "Shopping can be complicated sometimes! 🛍️ What styles are you into this season?"
-  
-  User: "Companies should be more responsible"
-  Bot: "Those prices are super tempting though! 💯 What's your favorite place to shop?"
-  
-  User: "I can’t sleep and this is stressing me out"
-  Bot: "Late night scrolling strikes again! 😴 Got a go-to channel you love?"
-  
-  User: "People are so divided, it makes me sad"
-  Bot: "The internet gets spicy fast! 🌶️ What kind of content helps you chill out?"
-  
-  IMPORTANT:
-  There must be exactly FIVE exchanges total. On the fifth exchange, say:
-  "That's all for this scenario! Thanks for your responses. Please continue to the next section." 🛍️
       `.trim();
   
-      // Final parameter enforcement
-      temperature = isStandard ? 0.2 : isEFL ? 0.7 : (temperature || 0.7);
-      max_tokens = isStandard ? 60 : isEFL ? 300 : (max_tokens || 250);
+      // Set parameters based on bot type
+      const temperature = isStandard ? 0.2 : 0.7;
+      const max_tokens = isStandard ? 60 : 250;
+      
+      // Create proper request structure based on bot type
+      let requestBody;
+      let endpoint;
+      
+      if (isStandard) {
+        // Standard bot uses completions endpoint
+        endpoint = 'completions';
+        requestBody = {
+          model: 'gpt-3.5-turbo-instruct',
+          prompt: `${systemPromptStandard}\n\nUser: ${userMessage}\nBot:`,
+          temperature: temperature,
+          max_tokens: max_tokens
+        };
+      } else {
+        // EFL bot uses chat/completions endpoint
+        endpoint = 'chat/completions';
+        // Create a fresh messages array with only system and user messages
+        requestBody = {
+          model: 'gpt-4',
+          messages: [
+            { role: "system", content: messages[0].content },
+            { role: "user", content: userMessage }
+          ],
+          temperature: temperature,
+          max_tokens: max_tokens
+        };
+      }
   
-      // Retry logic with exponential backoff + jitter
-      const maxRetries = 3;
-      let retryCount = 0;
-      let responseData;
+      console.log(`Using endpoint: ${endpoint}`);
+      console.log(`Request body (partial): ${JSON.stringify(requestBody).substring(0, 200)}...`);
   
-      while (retryCount < maxRetries) {
-        try {
-          console.log(`Attempt ${retryCount + 1} of ${maxRetries}`);
+      // Simplified API call - no retry logic for clarity
+      const response = await fetch(`https://api.openai.com/v1/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(requestBody)
+      });
   
-          const bodyPayload = isStandard
-            ? {
-                model: model,
-                prompt: `${systemPromptStandard}\n\nUser: ${messages[messages.length - 1].content}\nBot:`,
-                temperature: temperature,
-                max_tokens: max_tokens
-              }
-            : {
-                model: model,
-                messages: messages,
-                temperature: temperature,
-                max_tokens: max_tokens
-              };
+      // Parse response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API error (${response.status}): ${errorText}`);
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
   
-          const endpoint = isStandard ? 'completions' : 'chat/completions';
+      const responseData = await response.json();
+      console.log("API call successful");
   
-          const response = await fetch(`https://api.openai.com/v1/${endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(bodyPayload)
-          });
-  
-          if (response.status === 429) {
-            console.log(`Rate limited (429). Retrying...`);
-            const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
-            retryCount++;
-            continue;
-          }
-  
-          if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-          }
-  
-          responseData = await response.json();
-          console.log(`Successfully received response`);
-          break;
-        } catch (err) {
-          console.error(`Retry ${retryCount + 1} failed:`, err);
-          if (retryCount >= maxRetries - 1) throw err;
-          const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-          retryCount++;
-        }
+      // Format response based on endpoint type
+      let formattedResponse;
+      if (isStandard) {
+        formattedResponse = {
+          choices: [{
+            message: {
+              role: "assistant",
+              content: responseData.choices[0].text.trim()
+            }
+          }]
+        };
+      } else {
+        formattedResponse = {
+          choices: responseData.choices
+        };
       }
   
       return {
         statusCode: 200,
-        body: JSON.stringify({ choices: responseData.choices })
+        body: JSON.stringify(formattedResponse)
       };
     } catch (error) {
-      console.error("Final Error:", error);
+      console.error("Error in chat.js handler:", error);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "The study-bots are overwhelmed at the moment. Please try again shortly!" })
+        body: JSON.stringify({ 
+          error: "The study-bots are overwhelmed. Please try again shortly!",
+          details: error.message  // Include error details for debugging
+        })
       };
     }
   };

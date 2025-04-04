@@ -41,18 +41,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get the system prompt from the data attribute or use default
         const systemPrompt = document.body.getAttribute('data-system-prompt') || '';
         
-        // Add user message to conversation history
+        // Add user message to conversation history (for UI purposes only)
         conversationHistory.push({ role: 'user', content: userText });
         
-        // Create messages array with history
+        // Create messages array with ONLY system prompt and latest user message
         const messages = [
           { 
             role: 'system', 
             content: systemPrompt.replace('${exchangeCount + 1}', exchangeCount) 
           },
-          ...conversationHistory
+          { role: 'user', content: userText }
         ];
-  
+      
         try {
           // Create a timeout promise
           const timeoutPromise = new Promise((_, reject) => {
