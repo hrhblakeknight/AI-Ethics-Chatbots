@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const userInput = document.getElementById('user-input');
       const submitButton = document.getElementById('submit-button');
       const progressDots = document.querySelectorAll('.progress-dot');
+      const scenarioId = document.body.getAttribute('data-scenario-id');
   
       // Track conversation state
       let exchangeCount = 0;
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
               messages: messages,
               temperature: 0.7,
               max_tokens: 250,
-              scenario_id: document.body.getAttribute('data-scenario-id')
+              scenario_id: scenarioId
             })
           });   
           
