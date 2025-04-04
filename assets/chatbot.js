@@ -13,13 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const userInput = document.getElementById('user-input');
       const submitButton = document.getElementById('submit-button');
       const progressDots = document.querySelectorAll('.progress-dot');
+      
+      // Get scenario ID from data attribute
       const scenarioId = document.body.getAttribute('data-scenario-id');
+      if (!scenarioId) {
+        console.error('Missing data-scenario-id attribute on body');
+      }
   
       // Track conversation state
       let exchangeCount = 0;
       let conversationHistory = [];
       let waitingForResponse = false;
-
+  
       // Store the timestamp of the last message sent
       let lastMessageTime = 0;
   
@@ -66,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
               max_tokens: 250,
               scenario_id: scenarioId
             })
-          });   
+          });
           
           const response = await Promise.race([fetchPromise, timeoutPromise]);
   
@@ -171,27 +176,28 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       }
-        /**
-         * Check if enough time has passed since the last message
-         * @returns {boolean} - True if enough time has passed, false otherwise
-         */
-        function canSendMessage() {
-          const now = Date.now();
-          if (now - lastMessageTime < 2000) { // 2 seconds minimum between messages
-              return false;
-          }
-          return true;
+      
+      /**
+       * Check if enough time has passed since the last message
+       * @returns {boolean} - True if enough time has passed, false otherwise
+       */
+      function canSendMessage() {
+        const now = Date.now();
+        if (now - lastMessageTime < 2000) { // 2 seconds minimum between messages
+          return false;
         }
-
-        /**
-         * Wait for a specified amount of time before resolving
-         * @param {number} ms - The number of milliseconds to wait
-         * @returns {Promise<void>} - A promise that resolves after the specified time
-         */
-        function delay(ms) {
-            return new Promise(res => setTimeout(res, ms));
-        }
-
+        return true;
+      }
+  
+      /**
+       * Wait for a specified amount of time before resolving
+       * @param {number} ms - The number of milliseconds to wait
+       * @returns {Promise<void>} - A promise that resolves after the specified time
+       */
+      function delay(ms) {
+        return new Promise(res => setTimeout(res, ms));
+      }
+  
       // Form submission handler
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -200,11 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const userText = userInput.value.trim();
         if (!userText) return;
-
+  
         // Check if we can send the message
         if (!canSendMessage()) {
-            alert("Please wait a moment before sending another message.");
-            return;
+          alert("Please wait a moment before sending another message.");
+          return;
         }
         
         // Disable input while waiting for response
@@ -281,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
           submitButton.disabled = false;
           userInput.focus();
         }, typingDuration);
-
+  
         // Update the time of the last message
         lastMessageTime = Date.now();
       });

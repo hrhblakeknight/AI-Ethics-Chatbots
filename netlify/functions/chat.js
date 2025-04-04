@@ -1,3 +1,4 @@
+// This file handles the AI API requests securely
 exports.handler = async function(event, context) {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
@@ -21,16 +22,27 @@ exports.handler = async function(event, context) {
   
       const apiKey = keyMap[scenario_id];
       if (!apiKey) {
+        console.error(`No API key found for scenario: ${scenario_id}`);
         throw new Error("Invalid scenario_id or missing API key mapping");
       }
   
+      console.log(`Using API key for scenario: ${scenario_id}`);
+      
+      // Determine model based on scenario
+      const isEFL = scenario_id.includes('efl');
+      const model = isEFL ? 'gpt-4' : 'gpt-3.5-turbo';
+      
+      console.log(`Using model: ${model}`);
+  
       // Retry logic with exponential backoff + jitter
-      const maxRetries = 5;
+      const maxRetries = 3;
       let retryCount = 0;
       let responseData;
   
       while (retryCount < maxRetries) {
         try {
+          console.log(`Attempt ${retryCount + 1} of ${maxRetries}`);
+          
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -38,7 +50,7 @@ exports.handler = async function(event, context) {
               'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-              model: scenario_id.includes('efl') ? 'gpt-4' : 'gpt-3.5-turbo',
+              model: model,
               messages: messages,
               temperature: temperature || 0.7,
               max_tokens: max_tokens || 250
@@ -46,6 +58,7 @@ exports.handler = async function(event, context) {
           });
   
           if (response.status === 429) {
+            console.log(`Rate limited (429). Retrying...`);
             const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
             await new Promise(resolve => setTimeout(resolve, delay));
             retryCount++;
@@ -57,6 +70,7 @@ exports.handler = async function(event, context) {
           }
   
           responseData = await response.json();
+          console.log(`Successfully received response`);
           break;
         } catch (err) {
           console.error(`Retry ${retryCount + 1} failed:`, err);
@@ -79,4 +93,3 @@ exports.handler = async function(event, context) {
       };
     }
   };
-  
