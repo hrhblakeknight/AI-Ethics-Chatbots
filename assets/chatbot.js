@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           
           // Race the API call against the timeout
-          const fetchPromise = fetch('/.netlify/functions/chat', {
+          const fetchPromise = fetch('/api/chat', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
