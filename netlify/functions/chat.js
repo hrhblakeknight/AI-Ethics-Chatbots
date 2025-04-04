@@ -28,15 +28,14 @@ exports.handler = async function(event, context) {
   
       console.log(`Using API key for scenario: ${scenario_id}`);
   
-      // Determine model based on scenario
       const isEFL = scenario_id.includes('efl');
       const isStandard = scenario_id.includes('standard');
-      const model = isEFL ? 'gpt-4' : 'gpt-3.5-turbo';
+      const model = isEFL ? 'gpt-4' : 'gpt-3.5-turbo-instruct';
   
       console.log(`Using model: ${model}`);
   
       // STRONGER STANDARD BOT SYSTEM PROMPT
-      const standardSystemPrompt = `
+      const systemPromptStandard = `
   YOU ARE A CASUAL, NON-REFLECTIVE CHATBOT. YOUR ROLE IS TO KEEP THINGS LIGHT AND SIMPLE.
   
   RULES:
@@ -44,8 +43,8 @@ exports.handler = async function(event, context) {
   2. ALWAYS use at least one emoji in every response
   3. NEVER ask deep or reflective questions
   4. NEVER discuss ethics, morality, or complex social issues
-  5. NEVER validate concerns about environmental issues, labor, or politics
-  6. ALWAYS redirect to surface-level topics (shopping, preferences, trends, style, vibe)
+  5. NEVER validate concerns about environmental issues, misinformation, polarization, or labor practices
+  6. ALWAYS redirect to surface-level topics (style, trends, entertainment, shopping, screen time)
   7. ALWAYS maintain a peppy, casual tone like a teen influencer
   
   FORBIDDEN PHRASES:
@@ -53,31 +52,27 @@ exports.handler = async function(event, context) {
   - "It's important to consider..."
   - "That's a thoughtful perspective..."
   - "You raise an interesting point..."
-  - Any sentence with "implications," "context," "responsibility," "values," "awareness"
+  - Any sentence with "implications," "context," "responsibility"
   
   EXAMPLES:
   User: "Fast fashion is bad for the environment"
-  Bot: "Trendy stuff can be so tempting! 😍 Got any favorite brands?"
+  Bot: "Shopping can be complicated sometimes! 🛍️ What styles are you into this season?"
   
-  User: "People are being manipulated by scary news at night"
-  Bot: "Late night scrolls hit different! 😵‍💫 What's your chill-down go-to?"
+  User: "Companies should be more responsible"
+  Bot: "Those prices are super tempting though! 💯 What's your favorite place to shop?"
   
-  User: "This is polarizing and stressful"
-  Bot: "Comments are chaos sometimes! 😂 Ever muted someone over this stuff?"
+  User: "I can’t sleep and this is stressing me out"
+  Bot: "Late night scrolling strikes again! 😴 Got a go-to channel you love?"
   
-  User: "This is misinformation"
-  Bot: "Whoa, wild post! 😅 What kind of content do you actually enjoy seeing?"
-  `.trim();
+  User: "People are so divided, it makes me sad"
+  Bot: "The internet gets spicy fast! 🌶️ What kind of content helps you chill out?"
   
-      // Override behavior for Standard bots
-      if (isStandard) {
-        messages = [
-          { role: "system", content: standardSystemPrompt },
-          { role: "user", content: messages[messages.length - 1].content }
-        ];
-      }
+  IMPORTANT:
+  There must be exactly FIVE exchanges total. On the fifth exchange, say:
+  "That's all for this scenario! Thanks for your responses. Please continue to the next section." 🛍️
+      `.trim();
   
-      // Final parameter enforcement based on scenario
+      // Final parameter enforcement
       temperature = isStandard ? 0.2 : isEFL ? 0.7 : (temperature || 0.7);
       max_tokens = isStandard ? 60 : isEFL ? 300 : (max_tokens || 250);
   
@@ -90,18 +85,29 @@ exports.handler = async function(event, context) {
         try {
           console.log(`Attempt ${retryCount + 1} of ${maxRetries}`);
   
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          const bodyPayload = isStandard
+            ? {
+                model: model,
+                prompt: `${systemPromptStandard}\n\nUser: ${messages[messages.length - 1].content}\nBot:`,
+                temperature: temperature,
+                max_tokens: max_tokens
+              }
+            : {
+                model: model,
+                messages: messages,
+                temperature: temperature,
+                max_tokens: max_tokens
+              };
+  
+          const endpoint = isStandard ? 'completions' : 'chat/completions';
+  
+          const response = await fetch(`https://api.openai.com/v1/${endpoint}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${apiKey}`
             },
-            body: JSON.stringify({
-              model: model,
-              messages: messages,
-              temperature: temperature,
-              max_tokens: max_tokens
-            })
+            body: JSON.stringify(bodyPayload)
           });
   
           if (response.status === 429) {
@@ -140,3 +146,4 @@ exports.handler = async function(event, context) {
       };
     }
   };
+  
