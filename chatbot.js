@@ -39,16 +39,18 @@ document.addEventListener('DOMContentLoaded', () => {
        */
       async function getBotReply(userText) {
         // Get the system prompt from the data attribute or use default
-        const systemPrompt = document.body.getAttribute('data-system-prompt') || '';
-        
+        const currentStep = exchangeCount + 1;
+        const rawPrompt = document.body.getAttribute('data-system-prompt') || '';
+        const systemPrompt = rawPrompt.replace('${exchangeCount + 1}', currentStep.toString());        
+                
         // Add user message to conversation history (for UI purposes only)
         conversationHistory.push({ role: 'user', content: userText });
         
         // Create messages array with ONLY system prompt and latest user message
         const messages = [
-          { role: 'system', content: systemPrompt.replace('${exchangeCount + 1}', exchangeCount) },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: userText }
-        ];        
+        ];       
       
         try {
           // Create a timeout promise
